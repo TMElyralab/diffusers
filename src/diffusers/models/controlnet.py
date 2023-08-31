@@ -656,6 +656,7 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalControlnetMixin):
         cross_attention_kwargs: Optional[Dict[str, Any]] = None,
         guess_mode: bool = False,
         return_dict: bool = True,
+        controlnet_cond_latents: torch.Tensor = None,
     ) -> Union[ControlNetOutput, Tuple[Tuple[torch.FloatTensor, ...], torch.FloatTensor]]:
         """
         The [`ControlNetModel`] forward method.
@@ -690,6 +691,8 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalControlnetMixin):
                 you remove all prompts. A `guidance_scale` between 3.0 and 5.0 is recommended.
             return_dict (`bool`, defaults to `True`):
                 Whether or not to return a [`~models.controlnet.ControlNetOutput`] instead of a plain tuple.
+            controlnet_cond_latents: (`torch.Tensor`, *optional*, defaults to `None`):
+                controlnet img backbone 特征，适用于训练过程
 
         Returns:
             [`~models.controlnet.ControlNetOutput`] **or** `tuple`:
@@ -775,8 +778,10 @@ class ControlNetModel(ModelMixin, ConfigMixin, FromOriginalControlnetMixin):
 
         # 2. pre-process
         sample = self.conv_in(sample)
-
-        controlnet_cond = self.controlnet_cond_embedding(controlnet_cond)
+        if controlnet_cond_latents is None:
+            controlnet_cond = self.controlnet_cond_embedding(controlnet_cond)
+        else:
+            controlnet_cond = controlnet_cond_latents
         sample = sample + controlnet_cond
 
         # 3. down
