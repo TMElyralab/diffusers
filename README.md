@@ -37,6 +37,10 @@ limitations under the License.
     </a>
 </p>
 
+# TME 对diffusers的适配
+- rebase  20230912 的diffusers, commit id `b6e0b016cedaf60f51fa9f8d4e38c2324ee40783`
+
+# 原版
 🤗 Diffusers is the go-to library for state-of-the-art pretrained diffusion models for generating images, audio, and even 3D structures of molecules. Whether you're looking for a simple inference solution or training your own diffusion models, 🤗 Diffusers is a modular toolbox that supports both. Our library is designed with a focus on [usability over performance](https://huggingface.co/docs/diffusers/conceptual/philosophy#usability-over-performance), [simple over easy](https://huggingface.co/docs/diffusers/conceptual/philosophy#simple-over-easy), and [customizability over abstractions](https://huggingface.co/docs/diffusers/conceptual/philosophy#tweakable-contributorfriendly-over-abstraction).
 
 🤗 Diffusers offers three core components:
