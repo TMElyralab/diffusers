@@ -43,6 +43,7 @@ class MultiControlNetModel(ModelMixin):
         cross_attention_kwargs: Optional[Dict[str, Any]] = None,
         guess_mode: bool = False,
         return_dict: bool = True,
+        controlnet_cond_latents: torch.Tensor = None,
     ) -> Union[ControlNetOutput, Tuple]:
         for i, (image, scale, controlnet) in enumerate(zip(controlnet_cond, conditioning_scale, self.nets)):
             down_samples, mid_sample = controlnet(
@@ -58,6 +59,7 @@ class MultiControlNetModel(ModelMixin):
                 cross_attention_kwargs=cross_attention_kwargs,
                 guess_mode=guess_mode,
                 return_dict=return_dict,
+                controlnet_cond_latents=controlnet_cond_latents[i] if isinstance(controlnet_cond_latents, list) else None
             )
 
             # merge samples
