@@ -267,6 +267,14 @@ class AutoencoderKL(ModelMixin, ConfigMixin, FromOriginalVAEMixin):
         if self.use_tiling and (x.shape[-1] > self.tile_sample_min_size or x.shape[-2] > self.tile_sample_min_size):
             return self.tiled_encode(x, return_dict=return_dict)
 
+        # add by yuuhong, avoid NaN value in encode step (inf value passing to nn.GroupNorm)
+        dtype_backup = None
+        if x.dtype not in [torch.float32, torch.float64]:
+            dtype_backup = x.dtype
+            x = x.to(dtype=torch.float32)
+            self.encoder = self.encoder.to(dtype=torch.float32)
+            self.quant_conv = self.quant_conv.to(dtype=torch.float32)
+        
         if self.use_slicing and x.shape[0] > 1:
             encoded_slices = [self.encoder(x_slice) for x_slice in x.split(1)]
             h = torch.cat(encoded_slices)
@@ -274,6 +282,13 @@ class AutoencoderKL(ModelMixin, ConfigMixin, FromOriginalVAEMixin):
             h = self.encoder(x)
 
         moments = self.quant_conv(h)
+        
+        # add by yuuhong
+        if dtype_backup is not None:
+            moments = moments.to(dtype=dtype_backup)
+            self.encoder = self.encoder.to(dtype=dtype_backup)
+            self.quant_conv = self.quant_conv.to(dtype=dtype_backup)
+        
         posterior = DiagonalGaussianDistribution(moments)
 
         if not return_dict:
@@ -311,11 +326,25 @@ class AutoencoderKL(ModelMixin, ConfigMixin, FromOriginalVAEMixin):
                 returned.
 
         """
+        # add by yuuhong, avoid NaN value in decode step (inf value passing to nn.GroupNorm)
+        dtype_backup = None
+        if z.dtype not in [torch.float32, torch.float64]:
+            dtype_backup = z.dtype
+            z = z.to(dtype=torch.float32)
+            self.post_quant_conv = self.post_quant_conv.to(dtype=torch.float32)
+            self.decoder = self.decoder.to(dtype=torch.float32)
+        
         if self.use_slicing and z.shape[0] > 1:
             decoded_slices = [self._decode(z_slice).sample for z_slice in z.split(1)]
             decoded = torch.cat(decoded_slices)
         else:
             decoded = self._decode(z).sample
+            
+        # add by yuuhong
+        if dtype_backup is not None:
+            decoded = decoded.to(dtype=dtype_backup)
+            self.post_quant_conv = self.post_quant_conv.to(dtype=dtype_backup)
+            self.decoder = self.decoder.to(dtype=dtype_backup)
 
         if not return_dict:
             return (decoded,)
